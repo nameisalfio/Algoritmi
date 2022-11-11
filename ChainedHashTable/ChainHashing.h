@@ -1,137 +1,132 @@
-#ifndef CHAINHASHING_H 
-#define CHAINHASHING_H
+#ifndef CHAINEDHASHTABLE_H
+#define CHAINEDHASHTABLE_H
 
 template<class T>
 class HashTable{
-public:	     	
-	virtual HashTable<T>* insertKey(T x)=0;
-	virtual HashTable<T>* deleteKey(T key)=0;		
-	virtual int searchKey(T key) = 0;	
+
+public:
+	virtual void insertKey(T key)=0;
+	virtual void deleteKey(T key)=0;
+	virtual int searchKey(T key)=0;
 };
 
 template<class T>
 class ChainedHashTable : public HashTable<T>{
 
 private:
-	list<T>* table;
-	int slots;    // Number of slots (m)
-	int size;	//n
-
-protected:
-	list<T>* getTable(){return this->table;}
+	list<T>* array;
+	int m;	//number of slots
+	int n;	//number of element
 
 public:
-	ChainedHashTable<T>(int x)	// x slot 
+	ChainedHashTable<T>(int slots):n(0)
 	{
-		this->slots = x;
-		table = new list<T>[slots];
-		size = 0;		
+		this->m = slots;
+		array = new list<T>[m];
 	}
 
-	virtual int computeHashFunction(T x) = 0;
-
-	int getSlotNumber(){return slots;}
-
-	int getSize(){return size;}
-
-	void printHashTable()
-	{
-		cout << endl;
-		for (int i = 0; i < this->getSlotNumber(); i++)
-		{
-			cout << i;
-			for (auto x : table[i])
-				cout << " --> [" << x << "]";
-			cout << endl;
-		}
-	}
+	virtual int hashFunc(T key)=0;
 
 	int searchKey(T key)
 	{
-		int index = computeHashFunction(key);	// index = h(k)
-		typename list<T>::iterator i;	// iterator è un puntatore ad oggetto dinamico
-		for (i = table[index].begin(); i != table[index].end(); i++)	// begin() torna il puntatore ad inizio lista
+		int idx = hashFunc(key);	// indice dato da h(k)
+		typename list<T>::iterator i;	
+		for (i = array[idx].begin();  i != array[idx].end();  i++)	// begin() torna il puntatore ad inizio lista
 		{
-			if (*i == key)
-				return index;
+			if (*i == key)	// se l'indice punta alla chiave che cerco lo ritorno
+				return idx;
 		}
-		return -1;	
+		return -1;	// not found
 	}
 
-	// pos 1 -> posizione della sottolista (es. 3 per la terza sottolista dell'array)
-	// pos 2 -> posizione della chiave all'interno della sottolista
-	void searchKey(T key, int* pos1, int* pos2)	// per cancellare all'interno di una sottolista 
+	void searchKey(T key, int& idx, int& pos)	
 	{
-		*pos1 = computeHashFunction(key);
+		// idx rappresenta l'indice dell'array contenente la sottolista in cui cerco
+		// pos rappresenta la distanza della chiave dalla testa della idx-esima lista nell'array (profondità)
+
+		idx = hashFunc(key);
 		typename list<T>::iterator i;
-		for (i = table[*pos1].begin(); i != table[*pos1].end(); i++)
+		for (i = array[idx].begin(); i != array[idx].end(); i++)	//scorro la idx-esima lista dell'array
 		{
 			if (*i == key)
 			{				
-				*pos2 = (int) distance(table[*pos1].begin(), i);	// cast a int necessario perchè distance torna un T
+				pos = (int) distance(array[idx].begin(), i);	// conto il numero di incrementi che ho fatto per arrivare ad i (profonfità)
 				return;
 			}
 		}		 
-		*pos2 = -1;
-	}
+		pos = -1;	// not found
+	}		 
 
-	ChainedHashTable<T>* insertKey(T key)
+	void insertKey(T key)
 	{
-		int index, pos2;		
-		searchKey(key, &index, &pos2);		
-		if (pos2 == -1)	// se non ho trovato la chiave
+		int index, pos;		
+		searchKey(key, index, pos);	// setto le posizioni (slot e prodondità) della chiave cercata
+
+		if (pos == -1)	// se non ho trovato la chiave la inserisco (non voglio duplicati)
 		{			
-			table[index].push_front(key);	// insertHead()
-			size++;
+			array[index].push_front(key);	// insertHead()
+			n++;
 		}
-		return this;
 	}
 
-	ChainedHashTable<T>* deleteKey(T key)
+	void deleteKey(T key)
 	{		
-		int pos1 = -1;	// indice della sottolista
-		int pos2 = -1;	// distanza della chiave dalla testa della pos1-esima lista nell'array table
-		searchKey(key, &pos1, &pos2);
-		if (pos2 != -1)	// se non ho trovato la chiave
+		int idx = -1;
+		int pos = -1;
+		searchKey(key, idx, pos);	  // setto le posizioni (slot e prodondità) della chiave cercata
+		if (pos != -1)	// se ho trovato la chiave
 		{
-			typename list<T>::iterator i = table[pos1].begin();
-			advance(i, pos2);	// pos2 incrementi a partire da i
-			table[pos1].erase(i);
-			size--;
+			typename list<T>::iterator i = array[idx].begin();
+			advance(i, pos);	// scendo di pos elementi a partire da i nell' idx-esima lista
+			array[idx].erase(i);
+			n--;
 		}
-		return this;
 	}
+
+	friend ostream& operator<< (ostream& os, ChainedHashTable<T>& ref)
+	{
+		os << endl;
+		for (int i=0; i<ref.m; i++)
+		{
+			os << i;
+			for (int x : ref.array[i])
+				os << " --> [" << x << "]";
+			os << endl;
+		}
+		return os;
+	}
+
+	int slot()const{return this->m;}
 };
 
-template <class T> 
-class DivisionChainedHashTable : public ChainedHashTable<T>
+template<class T>
+class DivChainedHashTable : public ChainedHashTable<T>
 {
 
 public:
-	DivisionChainedHashTable<T>(int edge_number) : ChainedHashTable<T>(edge_number) {}
+	DivChainedHashTable<T>(int m) : ChainedHashTable<T>(m) {}
 
 private:
-	int computeHashFunction(T x) 
+	int hashFunc(T key) 
 	{
-		int h = ((int)x % this->getSlotNumber());
+		int h = ((int)key % this->slot());
 		return h;
 	}
 };
 
-
-template <class T> 
-class MultiplicationChainedHashTable : public ChainedHashTable<T>
+template<class T> 
+class MultChainedHashTable : public ChainedHashTable<T>
 {
 public:
-	MultiplicationChainedHashTable(int edge_number) : ChainedHashTable<T>(edge_number){c = 0.7;}
+	MultChainedHashTable(int m) : ChainedHashTable<T>(m),c(0.7){}
 
 private:
 	double c;
-	int computeHashFunction(T x) 
+	int hashFunc(T x) 
 	{
 		double y = x * c;
 		double a = y - (int)y;
-		int h = (int)(a * this->getSlotNumber());
+		int h = (int)(a * this->slot());
 		return h;
 	}
 };
