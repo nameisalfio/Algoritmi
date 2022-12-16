@@ -16,7 +16,6 @@ void init(List<int>& list)
 	while(is.good())
 	{
 		is >> val;
-		cout << "Val= " << val << endl;
 		list.insertHead(val);
 	}
 	is.close();
@@ -48,5 +47,5 @@ int main()
 		}
 	}
 	os.close();
-	cout << list << endl;
+	//cout << list << endl;
 }
