@@ -16,10 +16,25 @@ void init(List<int>& list)
 	while(is.good())
 	{
 		is >> val;
+
 		if(is.good())
-			list.insertHead(val);
+			list.insertTail(val);
+
 	}
 	is.close();
+}
+
+void preserv(List<int>& list)
+{
+	ofstream os("file.txt");
+	string str = "";
+	Node<int>* ptr = list.getHead();
+	while(ptr)
+	{
+		str = to_string(ptr->getVal());
+		os << str.append("\n");
+		ptr = ptr->getNext();
+	}
 }
 
 int main()
@@ -35,19 +50,16 @@ int main()
 
 	cout << "Input : " << endl;
 	cin >> val;
-	ofstream os("toAdd.txt");
-	while(idx++ < val)
+	while(idx < val)
 	{
 		x = rand() % 100;
 		if(list.search(x) == nullptr)
 		{	
+			idx ++;
 			cout << "Casualizzatore : " << x << endl;
-			list.insertHead(x);
-			string str = to_string(x);
-			os << str.append("\n");
+			list.insertTail(x);
 		}
 	}
-	os.close();
-
 	cout << list << endl;
+	preserv(list);
 }
