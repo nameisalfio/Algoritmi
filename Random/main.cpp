@@ -16,7 +16,8 @@ void init(List<int>& list)
 	while(is.good())
 	{
 		is >> val;
-		list.insertHead(val);
+		if(is.good())
+			list.insertHead(val);
 	}
 	is.close();
 }
@@ -47,5 +48,6 @@ int main()
 		}
 	}
 	os.close();
-	//cout << list << endl;
+
+	cout << list << endl;
 }
