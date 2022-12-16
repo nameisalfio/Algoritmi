@@ -270,15 +270,18 @@ public:
 		os << "\nHead: " << *l.head << endl;
 		os << "\nLinked_list: " << endl;
 
+		int count = 0;
+
 		Node<T>* ptr = l.head;
 		os << "\nHead --> ";
 		while(ptr)
 		{
 			os << *ptr << " --> ";
 			ptr = ptr->getNext();
+			count ++;
 		}
 
-		return os << "NIL" << endl << "\nEnd List\n" << endl; 
+		return os << "NIL" << endl << "\nEnd List\n" << "\nLength : " << count << endl;  
 	}
 
 	bool nonDecrescente(Node<T>* ptr){
